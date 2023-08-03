@@ -5,6 +5,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -19,6 +20,8 @@ import java.util.Properties;
 public abstract class BaseTest {
 //    Properties properties;
     WebDriver driver;
+
+    WebDriverWait wait;
 
     @BeforeClass
     @SneakyThrows
@@ -37,6 +40,7 @@ public abstract class BaseTest {
             } else if (driverName.contains("firefox")) {
                 driver = new FirefoxDriver();
             }
+            wait = new WebDriverWait(driver, Duration.ofSeconds(30));
 //        }
 
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(10));

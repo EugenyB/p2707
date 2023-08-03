@@ -5,16 +5,20 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.Select;
 import org.testng.annotations.Test;
 import util.PropertyReader;
 
 
+import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.DURATION;
+import static org.testng.Assert.assertTrue;
 
 public class SearchTest extends BaseTest {
 
@@ -59,8 +63,104 @@ public class SearchTest extends BaseTest {
     @Test
     public void testButtons() {
         driver.navigate().to(PropertyReader.getInstance().getProperty("site")+"button.html");
-        driver.findElement(By.xpath("//input[@value='Space After ']"))
-                .click();
+        WebElement btn = driver.findElement(By.id("choose_selenium_btn"));
+        assertThat(btn.isEnabled()).isTrue();
+        driver.findElement(By.linkText("Disable")).click();
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0));
+        wait.withTimeout(Duration.ofMillis(500));
+        assertThat(btn.isEnabled()).isFalse();
+        driver.findElement(By.linkText("Enable")).click();
+        wait.withTimeout(Duration.ofMillis(500));
+        assertThat(btn.isEnabled()).isTrue();
+    }
+
+    @SneakyThrows
+    @Test
+    public void testTextFields() {
+        driver.navigate().to(PropertyReader.getInstance().getProperty("site") + "text_field.html");
+        WebElement userField = driver.findElement(By.name("username"));
+        userField.clear();
+        userField.sendKeys("Eugeny");
+        driver.findElement(By.id("pass")).sendKeys("12345678");
+
+        driver.findElement(By.id("comments")).sendKeys("First line\nSecond line");
+
+        assertThat(userField.getAttribute("value")).isEqualToIgnoringCase("eugeny");
+        Thread.sleep(5000);
+    }
+
+    @SneakyThrows
+    @Test
+    public void testReadOnlyAndDisabled() {
+        driver.navigate().to(PropertyReader.getInstance().getProperty("site") + "text_field.html");
+//        driver.findElement(By.name("readonly_text")).sendKeys("new value");
+//        //System.out.println(driver.findElement(By.name("readonly_text")).getAttribute("value"));
+//        assertThat(driver.findElement(By.name("readonly_text")).getAttribute("value")).isEqualTo("new value");
+        ((JavascriptExecutor) driver).executeScript("$('#readonly_text').val('bypass');");
+        assertThat(driver.findElement(By.id("readonly_text")).getAttribute("value")).isEqualTo("bypass");
+        ((JavascriptExecutor) driver).executeScript("$('#disabled_text').val('anyuse');");
+        Thread.sleep(5000);
+    }
+
+    @SneakyThrows
+    @Test
+    public void testRadioButtons() {
+        driver.navigate().to(PropertyReader.getInstance().getProperty("site") + "radio_button.html");
+        Thread.sleep(1000);
+//        driver.findElement(By.xpath("//input[@name='gender' and@value='female']")).click();
+//        Thread.sleep(2000);
+//        driver.findElement(By.xpath("//input[@name='gender' and@value='male']")).click();
+//        Thread.sleep(2000);
+        List<WebElement> radioButtons = driver.findElements(By.name("gender"));
+
+//        radioButtons.stream().filter(e->e.getAttribute("value").equals("female")).findFirst().get().click();
+        radioButtons.stream().filter(rb -> rb.getAttribute("value").equals("female")).forEach(WebElement::click);
+        Thread.sleep(2000);
+
+//        radioButtons.get(1).click();
+//        Thread.sleep(2000);
+//        radioButtons.get(0).click();
+//        Thread.sleep(2000);
+    }
+
+    @SneakyThrows
+    @Test
+    public void testCheckBoxes() {
+        driver.navigate().to(PropertyReader.getInstance().getProperty("site") + "checkbox.html");
+        driver.findElement(By.name("vehicle_bike")).click();
+        Thread.sleep(2000);
+
+        WebElement element = driver.findElement(By.id("checkbox_car"));
+        if (!element.isSelected()) {
+            element.click();
+        }
+        Thread.sleep(2000);
+//        assertThat(element.isSelected()).isTrue();
+        assertTrue(element.isSelected());
+    }
+
+    @SneakyThrows
+    @Test
+    public void testSelectList() {
+        //driver.navigate().to(PropertyReader.getInstance().getProperty("site") + "select_list.html");
+        visit("select_list.html");
+        Thread.sleep(2000);
+        driver.manage().window().minimize();
+        Thread.sleep(2000);
+        driver.manage().window().maximize();
+//        WebElement element = driver.findElement(By.name("car_make"));
+//        Select select = new Select(element);
+//        select.selectByVisibleText("Volvo (Sweden)");
+//        Thread.sleep(2000);
+//        select.selectByValue("audi");
+//        Thread.sleep(2000);
+
+        Select select = new Select(driver.findElement(By.name("test_framework")));
+        select.selectByVisibleText("Selenium");
+        select.selectByValue("rwebspec");
+        select.selectByIndex(2);
+        List<WebElement> options = select.getAllSelectedOptions();
+        assertThat(options.stream().anyMatch(e->e.getAttribute("value").equals("selenium"))).isTrue();
     }
 
     @Test
@@ -103,5 +203,9 @@ public class SearchTest extends BaseTest {
        // assertThat(list.get(2).getText()).isEqualToIgnoringCase("text field");
 
         System.out.println(list.get(3).getAttribute("href"));
+    }
+
+    public void visit(String path) {
+        driver.navigate().to(PropertyReader.getInstance().getProperty("site") + path);
     }
 }
